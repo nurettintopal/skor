@@ -5,36 +5,74 @@ import (
 	"math"
 )
 
-// Function to calculate score
-func CalculateScore(B float64, A float64, attempt int) float64 {
-	return B / math.Pow(float64(attempt), A)
+// ScoringStrategy defines the interface for scoring strategies
+type ScoringStrategy interface {
+	CalculateScore(attempt int) float64
+}
+
+// CorrectAnswerStrategy implements scoring for correct answers
+type CorrectAnswerStrategy struct {
+	BaseScore    float64
+	DecreaseRate float64
+}
+
+// CalculateScore calculates the score for a correct answer
+func (c *CorrectAnswerStrategy) CalculateScore(attempt int) float64 {
+	return c.BaseScore / math.Pow(float64(attempt), c.DecreaseRate)
+}
+
+// IncorrectAnswerStrategy implements scoring for incorrect answers
+type IncorrectAnswerStrategy struct {
+	BaseScore    float64
+	DecreaseRate float64
+}
+
+// CalculateScore calculates the score for an incorrect answer
+func (i *IncorrectAnswerStrategy) CalculateScore(attempt int) float64 {
+	return i.BaseScore / math.Pow(float64(attempt), i.DecreaseRate)
+}
+
+// ScoringSystem handles the overall scoring system
+type ScoringSystem struct {
+	CorrectStrategy   ScoringStrategy
+	IncorrectStrategy ScoringStrategy
+}
+
+// CalculateTotalScore calculates the total score based on correct and incorrect attempts
+func (s *ScoringSystem) CalculateTotalScore(correctAttempts, incorrectAttempts int) float64 {
+	totalCorrectScore := 0.0
+	for i := 1; i <= correctAttempts; i++ {
+		score := s.CorrectStrategy.CalculateScore(i)
+		fmt.Printf("%d. correct answer score: %f\n", i, score)
+		totalCorrectScore += score
+	}
+
+	totalIncorrectScore := 0.0
+	for i := 1; i <= incorrectAttempts; i++ {
+		score := s.IncorrectStrategy.CalculateScore(i)
+		fmt.Printf("%d. wrong answer score: %f\n", i, score)
+
+		totalIncorrectScore += score
+	}
+
+	return totalCorrectScore + totalIncorrectScore
 }
 
 func main() {
-	B := 1.0  // Base score for the first correct answer
-	A1 := 0.8 // Decrease factor
-	A2 := 0.4 // Decrease factor
+	// Define strategies
+	correctStrategy := &CorrectAnswerStrategy{BaseScore: 1.0, DecreaseRate: 0.8}
+	incorrectStrategy := &IncorrectAnswerStrategy{BaseScore: -1.0, DecreaseRate: 0.4}
+
+	// Initialize scoring system
+	scoringSystem := &ScoringSystem{
+		CorrectStrategy:   correctStrategy,
+		IncorrectStrategy: incorrectStrategy,
+	}
+
+	// Calculate total score
 	correctAttempts := 9
 	incorrectAttempts := 3
+	totalScore := scoringSystem.CalculateTotalScore(correctAttempts, incorrectAttempts)
 
-	// Total score from correct answers
-	totalCorrectScore := 0.0
-	for i := 1; i <= correctAttempts; i++ {
-		score := CalculateScore(B, A1, i)
-		totalCorrectScore += score
-		fmt.Printf("%d. correct answer score: %f\n", i, score)
-	}
-
-	// Total score from incorrect answers
-	BIncorrect := -1.0
-	totalIncorrectScore := 0.0
-	for i := 1; i <= incorrectAttempts; i++ {
-		score := CalculateScore(BIncorrect, A2, i)
-		totalIncorrectScore += score
-		fmt.Printf("%d. incorrect answer score: %f\n", i, score)
-	}
-
-	// Final total score
-	totalScore := totalCorrectScore + totalIncorrectScore
 	fmt.Printf("Total score: %f\n", totalScore)
 }
