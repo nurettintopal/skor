@@ -70,8 +70,8 @@ func main() {
 	}
 
 	// Calculate total score
-	correctAttempts := 9
-	incorrectAttempts := 3
+	correctAttempts := 0
+	incorrectAttempts := 0
 	totalScore := scoringSystem.CalculateTotalScore(correctAttempts, incorrectAttempts)
 
 	fmt.Printf("Total score: %f\n", totalScore)
